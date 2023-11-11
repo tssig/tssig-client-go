@@ -110,8 +110,10 @@ func (c *Client) sign(digest [32]byte) (*tssig.SignedTimeStamp, error) {
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != 200 {
-		return nil, Retryable(fmt.Sprintf("returned non-200 status code %d", response.StatusCode))
+	if response.StatusCode == 429 || response.StatusCode >= 500 {
+		return nil, Retryable(fmt.Sprintf("returned non-200 status code %d. we can retry", response.StatusCode))
+	} else if response.StatusCode != 200 {
+		return nil, fmt.Errorf("returned non-200 status code %d", response.StatusCode)
 	}
 
 	if response.ContentLength > MaxHttpDownloadSize {
