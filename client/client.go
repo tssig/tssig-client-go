@@ -36,6 +36,10 @@ type payload struct {
 //---
 
 type Client struct {
+
+	// The TSSig server's URL.
+	Endpoint string
+
 	// TotalTimeout denotes the total time that we'll keep retrying to get a successful response, including retries.
 	TotalTimeout time.Duration
 
@@ -46,9 +50,10 @@ type Client struct {
 }
 
 // NewClient Creates a new Client with sensible defaults.
-func NewClient() *Client {
+func NewClient(endpoint string) *Client {
 	// A TotalTimeout of 60 seconds gives us about 10 attempts, with an Exponential BackOff
 	return &Client{
+		Endpoint:     endpoint,
 		TotalTimeout: 60 * time.Second,
 		HttpClient:   &http.Client{Timeout: 5 * time.Second},
 	}
@@ -57,7 +62,7 @@ func NewClient() *Client {
 //---
 
 // Sign Initiates the request to sign the digest, with Exponential BackOff  retrieds in place.
-func (c *Client) Sign(endpoint string, digest [32]byte) (*tssig.SignedTimeStamp, error) {
+func (c *Client) Sign(digest [32]byte) (*tssig.SignedTimeStamp, error) {
 	exponentialBackOff := backoff.NewExponentialBackOff()
 	exponentialBackOff.MaxElapsedTime = c.TotalTimeout
 
@@ -65,7 +70,7 @@ func (c *Client) Sign(endpoint string, digest [32]byte) (*tssig.SignedTimeStamp,
 
 	return backoff.RetryNotifyWithData(
 		func() (*tssig.SignedTimeStamp, error) {
-			sts, err := c.sign(endpoint, digest)
+			sts, err := c.sign(digest)
 
 			// Check if the error is Retryable, or a timeout...
 			if errors.As(err, &retryable) || os.IsTimeout(err) {
@@ -81,7 +86,7 @@ func (c *Client) Sign(endpoint string, digest [32]byte) (*tssig.SignedTimeStamp,
 }
 
 // sign Perform the actual HTTP request to retrieve a Signed Time Stamp.
-func (c *Client) sign(endpoint string, digest [32]byte) (*tssig.SignedTimeStamp, error) {
+func (c *Client) sign(digest [32]byte) (*tssig.SignedTimeStamp, error) {
 	requestPayload := &payload{
 		Digest: base64.URLEncoding.EncodeToString(digest[:]),
 	}
@@ -91,7 +96,7 @@ func (c *Client) sign(endpoint string, digest [32]byte) (*tssig.SignedTimeStamp,
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonPayload))
+	req, err := http.NewRequest("POST", c.Endpoint, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return nil, err
 	}
