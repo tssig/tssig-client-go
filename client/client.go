@@ -61,7 +61,7 @@ func NewClient(endpoint string) *Client {
 
 //---
 
-// Sign Initiates the request to sign the digest, with Exponential BackOff  retrieds in place.
+// Sign Initiates the request to sign the digest, with Exponential BackOff retrieds in place.
 func (c *Client) Sign(digest [32]byte) (*tssig.SignedTimeStamp, error) {
 	exponentialBackOff := backoff.NewExponentialBackOff()
 	exponentialBackOff.MaxElapsedTime = c.TotalTimeout
@@ -102,7 +102,7 @@ func (c *Client) sign(digest [32]byte) (*tssig.SignedTimeStamp, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "tssig-Client-go")
+	req.Header.Set("User-Agent", "tssig-client-go")
 
 	response, err := c.HttpClient.Do(req)
 	if err != nil {
