@@ -61,8 +61,23 @@ func NewClient(endpoint string) *Client {
 
 //---
 
-// Sign Initiates the request to sign the digest, with Exponential BackOff retrieds in place.
-func (c *Client) Sign(digest [32]byte) (*tssig.SignedTimeStamp, error) {
+// Sign Initiates the request to sign the digest, with Exponential BackOff retries in place.
+func (c *Client) Sign(digest []byte) (*tssig.SignedTimeStamp, error) {
+
+	switch length := len(digest); length {
+	case 224 / 8:
+	case 256 / 8:
+	case 384 / 8:
+	case 512 / 8:
+	default:
+		return nil, fmt.Errorf(
+			"digest must be exactly 224, 256, 384, or 512 bits. %d bits found",
+			len(digest)*8,
+		)
+	}
+
+	// ---
+
 	exponentialBackOff := backoff.NewExponentialBackOff()
 	exponentialBackOff.MaxElapsedTime = c.TotalTimeout
 
@@ -86,9 +101,9 @@ func (c *Client) Sign(digest [32]byte) (*tssig.SignedTimeStamp, error) {
 }
 
 // sign Perform the actual HTTP request to retrieve a Signed Time Stamp.
-func (c *Client) sign(digest [32]byte) (*tssig.SignedTimeStamp, error) {
+func (c *Client) sign(digest []byte) (*tssig.SignedTimeStamp, error) {
 	requestPayload := &payload{
-		Digest: base64.URLEncoding.EncodeToString(digest[:]),
+		Digest: base64.URLEncoding.EncodeToString(digest),
 	}
 
 	jsonPayload, err := json.Marshal(requestPayload)
