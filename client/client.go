@@ -14,8 +14,7 @@ import (
 )
 
 // MaxHttpDownloadSize Maximum size, in bytes, we'll accept.
-// Responses are typically ~450 bytes.
-const MaxHttpDownloadSize = 512
+const MaxHttpDownloadSize = 768
 
 //---
 
@@ -36,7 +35,6 @@ type payload struct {
 //---
 
 type Client struct {
-
 	// The TSSig server's URL.
 	Endpoint string
 
