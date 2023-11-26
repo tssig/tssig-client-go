@@ -101,7 +101,7 @@ func (c *Client) Sign(digest []byte) (*tssig.SignedTimeStamp, error) {
 // sign Perform the actual HTTP request to retrieve a Signed Time Stamp.
 func (c *Client) sign(digest []byte) (*tssig.SignedTimeStamp, error) {
 	requestPayload := &payload{
-		Digest: base64.URLEncoding.EncodeToString(digest),
+		Digest: base64.RawURLEncoding.EncodeToString(digest),
 	}
 
 	jsonPayload, err := json.Marshal(requestPayload)
